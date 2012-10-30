@@ -1,0 +1,72 @@
+#!/usr/bin/expect -f
+# $Header: /var/lib/cvsd/var/lib/cvsd/Tn-GW-Scan/src/Tn-GW-Scan.exp,v 1.1.1.1 2012-10-30 16:46:20 timb Exp $
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+# * Neither the name of the Nth Dimension nor the names of its contributors may
+# be used to endorse or promote products derived from this software without
+# specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# (c) Portcullis Computer Security Ltd and Tim Brown, 2005
+# <mailto:enquiries@portcullis-security.com / <mailto:timb@nth-dimension.org.uk>
+# <http://www.portcullis-security.com/> / <http://www.nth-dimension.org.uk/>
+# / <http://www.machine.org.uk/>
+
+set force_conservative 0
+if {$force_conservative} {
+	set send_slow {1 .1}
+	proc send {ignore arg} {
+		sleep .1
+		exp_send -s -- $arg
+	}
+}
+match_max 100000
+if {$argc < 4} {
+	error "usage: $argv0 <gatewayhostname> <connecttimeout> <targethostnameslist> <targetportnumberslist>"
+}
+set gatewayhostname [lindex $argv 0]
+set connecttimeout [lindex $argv 1]
+set timeout [expr $connecttimeout + 1]
+set targethostnamelist [lindex $argv 2]
+set targetportnumberlist [lindex $argv 3]
+foreach targethostname [split $targethostnamelist ,] {
+	foreach targetportnumbergroup [split $targetportnumberlist ,] {
+		set starttargetportnumber [lindex [split $targetportnumbergroup -] 0]
+		set endtargetportnumber [lindex [split $targetportnumbergroup -] 1]
+		if {$endtargetportnumber <= $starttargetportnumber} {
+			set endtargetportnumber $starttargetportnumber
+		}
+		for {set targetportnumber $starttargetportnumber} {$targetportnumber <= $endtargetportnumber} {incr targetportnumber} {
+			spawn -noecho telnet $gatewayhostname
+			expect "tn-gw->"
+			send -- "timeout $connecttimeout\r\n"
+			expect "tn-gw->"
+			send -- "connect $targethostname $targetportnumber\r\n"
+			expect {
+				"Connected to " {send_user "\r\n$targethostname:$targetportnumber:open\r\n"}
+				": Connection refused" {send_user "\r\n$targethostname:$targetportnumber:closed\r\n"}
+			}
+			close
+			wait
+		}
+	}
+}
+exit 0

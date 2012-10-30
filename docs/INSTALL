@@ -1,0 +1,9 @@
+To install:
+
+1) Check you have expect and telnet installed (expect and telnet
+   packages under GNU/Debian)
+2) Make sure Tn-GW-Scan.exp is executable (chmod u+x
+   Tn-GW-Scan.exp)
+
+The latest version of Tn-GW-Scan can always be found at
+<http://www.nth-dimension.org.uk/>.

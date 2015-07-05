@@ -1,5 +1,5 @@
 #!/usr/bin/expect -f
-# $Header: /var/lib/cvsd/var/lib/cvsd/Tn-GW-Scan/src/Tn-GW-Scan.exp,v 1.2 2012-10-30 17:02:49 timb Exp $
+# $Revision$
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
